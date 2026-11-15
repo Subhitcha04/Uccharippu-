@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uccharippu · Harbour Ledger</title>
+<style>
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --ink: #14202b; --mute: #5b6b7a; --line: #dde3ea;
+  --ok: #1a7f4b; --okbg: #e3f4ea; --warn: #9a5b00; --warnbg: #fff1d6; --bad: #b3261e; --badbg: #fde7e5;
+  --info: #1d5fa8; --infobg: #e2eefb; --accent: #0b6b78;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e151b; --card: #17212a; --ink: #e8eef3; --mute: #93a4b3; --line: #2a3945;
+    --ok: #5ad19a; --okbg: #12301f; --warn: #f0b34a; --warnbg: #38290d; --bad: #ff8a80; --badbg: #3b1714;
+    --info: #7db8f5; --infobg: #13283f; --accent: #54c4d3;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", "Noto Sans Tamil", "Nirmala UI", Latha, sans-serif; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--card); }
+header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+header h1 small { font-weight: 400; color: var(--mute); margin-left: 8px; }
+.badge { font-size: 12px; padding: 3px 9px; border-radius: 99px; font-weight: 600; border: 1px solid currentColor; }
+.badge.saved { color: var(--warn); background: var(--warnbg); }
+.badge.live { color: var(--ok); background: var(--okbg); }
+.spacer { flex: 1; }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; }
+main { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 16px; padding: 16px 20px; align-items: start; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--mute); margin: 0 0 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.seg button { border-radius: 0; margin: 0; }
+.seg button:first-child { border-radius: 8px 0 0 8px; } .seg button:last-child { border-radius: 0 8px 8px 0; }
+.seg button + button { border-left: 0; }
+.seg button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.demo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+.demo:first-of-type { border-top: 0; }
+.demo .name { font-weight: 600; } .demo .sub { color: var(--mute); font-size: 13px; }
+#transcript { height: 150px; overflow: auto; background: var(--bg); border-radius: 8px; padding: 8px 10px; font-size: 15px; }
+#transcript .p { color: var(--mute); font-style: italic; }
+#transcript div { margin-bottom: 3px; }
+.scoreboard { text-align: center; padding: 6px 0 2px; }
+.scoreboard .sp { font-size: 20px; font-weight: 700; min-height: 30px; }
+.scoreboard .pr { font-size: 46px; font-weight: 800; color: var(--accent); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.scoreboard .bids { color: var(--mute); font-size: 13px; min-height: 20px; word-spacing: 2px; }
+.idle { color: var(--mute); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; color: var(--mute); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.chip.ok { background: var(--okbg); color: var(--ok); } .chip.review { background: var(--warnbg); color: var(--warn); }
+.chip.corrected { background: var(--infobg); color: var(--info); } .chip.confirmed { background: var(--okbg); color: var(--ok); }
+.empty { color: var(--bad); font-weight: 600; }
+.review-card { border: 1px solid var(--warn); background: var(--warnbg); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.review-card .why { font-size: 13px; color: var(--warn); margin-bottom: 6px; }
+.review-card .fields { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.review-card select, .review-card input, td select, td input { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.review-card input[type=number], td input[type=number] { width: 100px; }
+.heard { font-size: 12px; color: var(--mute); margin-top: 6px; word-break: break-word; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+.toast.show { opacity: 1; }
+.hint { color: var(--mute); font-size: 13px; }
+details summary { cursor: pointer; color: var(--mute); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Uccharippu <small>harbour ledger · துறைமுகக் கணக்கு</small></h1>
+  <span id="badge" class="badge saved">connecting…</span>
+  <span class="spacer"></span>
+  <label class="hint"><input type="checkbox" id="sound" checked> play the audio</label>
+  <button id="export">Export CSV</button>
+  <button id="reset">Reset ledger</button>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>Play a demo lot</h2>
+      <div class="row">
+        <span class="hint">noise</span>
+        <span class="seg" id="cond">
+          <button data-v="clean" class="on">clean</button><button data-v="snr20">20 dB</button><button data-v="snr10">10 dB</button><button data-v="snr5">5 dB</button>
+        </span>
+      </div>
+      <div class="row">
+        <span class="hint">speed</span>
+        <span class="seg" id="speed"><button data-v="1" class="on">1×</button><button data-v="2">2×</button><button data-v="4">4×</button></span>
+      </div>
+      <div id="demos"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="primary" id="playall">▶ Play all</button>
+        <button id="stop" disabled>■ Stop</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Listening</h2>
+      <div id="transcript"><div class="idle">Nothing playing.</div></div>
+    </section>
+
+    <section>
+      <h2>Lot in progress</h2>
+      <div class="scoreboard">
+        <div class="sp idle" id="sb-sp">–</div>
+        <div class="pr" id="sb-pr">₹ –</div>
+        <div class="bids" id="sb-bids"></div>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section id="review-sec" hidden>
+      <h2>Needs review <span id="review-n"></span></h2>
+      <div id="review"></div>
+    </section>
+
+    <section>
+      <h2>Ledger <span id="ledger-n" class="hint"></span></h2>
+      <div id="ledger-empty" class="hint">No lots yet. Press “Play all”.</div>
+      <table id="ledger" hidden>
+        <thead><tr><th>#</th><th>Species</th><th style="text-align:right">Price ₹</th><th>Buyer</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="hint" id="src-note"></p>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const S = { mode: "saved", lots: [], species: [], roster: [], demo: [], cond: "clean", speed: 1, playing: false, edit: null, needsToken: false, audio: null, listening: false };
+const $ = (id) => document.getElementById(id);
+
+// Build DOM with textContent only: transcripts and names come from speech recognition, never trust them as HTML.
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v === true) n.setAttribute(k, ""); else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return n;
+}
+const rupees = (p) => (p == null ? null : "₹ " + Number(p).toLocaleString("en-IN"));
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 4200); }
+
+// ---------------------------------------------------------------- websocket (auto-reconnect)
+let ws, retry = 0;
+function connect() {
+  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
+  ws.onopen = () => { retry = 0; };
+  ws.onclose = () => { $("badge").textContent = "reconnecting…"; setTimeout(connect, Math.min(1000 * 2 ** retry++, 8000)); };
+  ws.onmessage = (e) => on(JSON.parse(e.data));
+}
+const send = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); else toast("Not connected yet"); };
+
+function on(m) {
+  switch (m.type) {
+    case "snapshot":
+      Object.assign(S, { mode: m.mode, lots: m.lots, species: m.species, roster: m.roster, demo: m.demo, needsToken: m.live_needs_token, playing: m.playing });
+      renderAll(); break;
+    case "clip":
+      if (m.state === "start") {
+        $("transcript").replaceChildren(); S.listening = false; resetScoreboard(); S.listening = true; $("sb-sp").textContent = "listening…";
+        if (S.audio) S.audio.pause();
+        if ($("sound").checked) { S.audio = new Audio(m.audio_url); S.audio.playbackRate = m.speed; S.audio.play().catch(() => {}); }
+      }
+      break;
+    case "partial": setPartial(m.text); break;
+    case "final": addFinal(m.text); break;
+    case "speech": if ($("sb-sp").classList.contains("idle")) $("sb-sp").textContent = "● hearing the auctioneer…"; break;
+    case "live": scoreboard(m.preview); break;
+    case "lot": upsert(m.lot); S.listening = false; resetScoreboard(); break;
+    case "done": S.playing = false; S.listening = false; resetScoreboard(); renderControls(); break;
+    case "error": toast(m.message); S.playing = false; renderControls(); break;
+  }
+}
+
+// ---------------------------------------------------------------- transcript + scoreboard
+function setPartial(text) {
+  const box = $("transcript"); let p = box.querySelector(".p");
+  if (!p) { p = el("div", { class: "p" }); box.append(p); }
+  p.textContent = text; box.scrollTop = box.scrollHeight;
+}
+function addFinal(text) {
+  const box = $("transcript"); const p = box.querySelector(".p"); if (p) p.remove();
+  box.append(el("div", {}, text)); box.scrollTop = box.scrollHeight;
+}
+function scoreboard(pv) {
+  if (pv.species || !S.listening) { $("sb-sp").textContent = pv.species || "–"; }
+  $("sb-sp").classList.toggle("idle", !pv.species);
+  $("sb-pr").textContent = pv.price != null ? rupees(pv.price) : "₹ –";
+  $("sb-bids").textContent = pv.seq && pv.seq.length ? "bids heard: " + pv.seq.map((x) => Number(x).toLocaleString("en-IN")).join(" → ") : "";
+}
+function resetScoreboard() { scoreboard({ species: null, price: null, seq: [] }); }
+
+// ---------------------------------------------------------------- ledger
+function upsert(lot) {
+  const i = S.lots.findIndex((l) => l.id === lot.id);
+  if (i >= 0) S.lots[i] = lot; else S.lots.push(lot);
+  if (S.edit === lot.id) S.edit = null;
+  renderLedger();
+}
+const WHY = { "species?": "species unclear", "buyer?": "buyer name unclear", "final-called-once": "final price heard only once",
+  "no-closing-word": "no closing word heard", "no-price": "no price heard", "garbled-near-end": "garbled near the end",
+  "audio-ended": "audio ended early", "silence": "stopped after a silence", "silence-no-closing": "long silence" };
+const why = (l) => (l.flags || []).map((f) => WHY[f] || (f.startsWith("final-") ? "final price was repaired: check it" : f)).join(" · ") || "check";
+
+function pickSpecies(value) {
+  const s = el("select", {}, el("option", { value: "" }, "species…"), S.species.map((x) => el("option", { value: x }, x)));
+  s.value = value || ""; return s;
+}
+function pickBuyer(value) {
+  const s = el("select", {}, el("option", { value: "" }, "buyer…"), S.roster.map((x) => el("option", { value: x }, x)));
+  s.value = value || ""; return s;
+}
+function editors(l) {
+  const sp = pickSpecies(l.species), pr = el("input", { type: "number", min: "1", step: "50", value: l.price ?? "", placeholder: "price ₹" }), by = pickBuyer(l.buyer);
+  return { sp, pr, by, send(confirm) {
+    if (!sp.value || !pr.value || !by.value) { toast("Fill in species, price and buyer"); return; }
+    send({ type: "update", id: l.id, species: sp.value, price: Number(pr.value), buyer: by.value });
+    if (confirm) send({ type: "confirm", id: l.id });
+  } };
+}
+
+function renderLedger() {
+  const lots = S.lots, review = lots.filter((l) => l.status === "review");
+  $("ledger-n").textContent = lots.length ? "(" + lots.length + ")" : "";
+  $("ledger-empty").hidden = lots.length > 0; $("ledger").hidden = lots.length === 0;
+  $("review-sec").hidden = review.length === 0; $("review-n").textContent = review.length ? "(" + review.length + ")" : "";
+
+  $("review").replaceChildren(...review.map((l) => {
+    const ed = editors(l);
+    return el("div", { class: "review-card" },
+      el("div", { class: "why" }, "Lot " + l.id + ": " + why(l)),
+      el("div", { class: "fields" }, ed.sp, ed.pr, ed.by, el("button", { class: "primary", onclick: () => ed.send(true) }, "Save & confirm")),
+      el("div", { class: "heard" }, "heard: " + l.transcript));
+  }));
+
+  const tb = $("ledger").querySelector("tbody");
+  tb.replaceChildren(...[...lots].reverse().map((l) => {
+    if (S.edit === l.id) {
+      const ed = editors(l);
+      return el("tr", {}, el("td", {}, l.id), el("td", {}, ed.sp), el("td", { class: "num" }, ed.pr), el("td", {}, ed.by), el("td", {}, ""),
+        el("td", {}, el("button", { class: "primary", onclick: () => ed.send(false) }, "Save"), " ", el("button", { onclick: () => { S.edit = null; renderLedger(); } }, "Cancel")));
+    }
+    const miss = (v, text) => (v == null ? el("span", { class: "empty" }, "missing") : text ?? v);
+    const o = l.original || {};
+    const edited = (l.history || []).some((h) => h.action === "edit");
+    return el("tr", {},
+      el("td", {}, l.id), el("td", {}, miss(l.species)), el("td", { class: "num" }, miss(l.price, rupees(l.price))), el("td", {}, miss(l.buyer)),
+      el("td", {}, el("span", { class: "chip " + l.status, title: edited ? "machine heard: " + [o.species, o.price, o.buyer].map((x) => x ?? "?").join(" / ") : "" }, l.status)),
+      el("td", {},
+        el("button", { title: "Read the receipt aloud", onclick: () => receipt(l.id) }, "🔊"), " ",
+        el("button", { onclick: () => { S.edit = l.id; renderLedger(); } }, "Edit"), " ",
+        l.status === "ok" ? el("button", { onclick: () => send({ type: "confirm", id: l.id }) }, "Confirm") : null));
+  }));
+  $("src-note").textContent = lots.length ? (S.mode === "saved"
+    ? "Source: saved Prisma transcripts of synthetic test auctions (Gnani Timbre voice), replayed at the speed of the audio (not a live call)."
+    : "Source: live Prisma speech-to-text.") + " Every edit keeps what the machine heard." : "";
+}
+
+async function receipt(id) {
+  try {
+    const r = await fetch("/api/receipt/" + id);
+    if (!r.ok) { const j = await r.json().catch(() => ({})); toast("Receipt unavailable: " + (j.error || r.status)); return; }
+    const a = new Audio(URL.createObjectURL(await r.blob())); a.play();
+  } catch (e) { toast("Receipt failed: " + e.message); }
+}
+
+// ---------------------------------------------------------------- controls
+function renderControls() {
+  $("playall").disabled = S.playing; $("stop").disabled = !S.playing;
+  document.querySelectorAll("#demos button").forEach((b) => (b.disabled = S.playing));
+}
+function itemFor(d) { return { lot: d.lot, cond: d.force_cond || S.cond }; }
+function play(items) {
+  const body = { type: "play", items, speed: S.speed };
+  if (S.needsToken) { body.token = sessionStorage.getItem("tok") || prompt("Access token for live mode"); if (body.token) sessionStorage.setItem("tok", body.token); }
+  S.playing = true; renderControls(); send(body);
+}
+function renderAll() {
+  const b = $("badge");
+  b.className = "badge " + (S.mode === "live" ? "live" : "saved");
+  b.textContent = S.mode === "live" ? "LIVE · Prisma" : "SAVED PRISMA TRANSCRIPTS";
+  $("demos").replaceChildren(...S.demo.map((d) => el("div", { class: "demo" },
+    el("div", {}, el("div", { class: "name" }, d.label), el("div", { class: "sub" }, d.lot + (d.force_cond ? " · " + d.force_cond + " only" : ""))),
+    el("button", { onclick: () => play([itemFor(d)]) }, "▶"))));
+  renderLedger(); renderControls();
+}
+function seg(id, key, parse) {
+  $(id).addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); S[key] = parse(b.dataset.v);
+  });
+}
+seg("cond", "cond", String); seg("speed", "speed", Number);
+$("playall").addEventListener("click", () => play(S.demo.map(itemFor)));
+$("stop").addEventListener("click", () => send({ type: "stop" }));
+$("reset").addEventListener("click", () => { if (confirm("Clear the whole ledger?")) send({ type: "reset" }); });
+$("export").addEventListener("click", () => { location.href = "/api/export.csv"; });
+connect();
+</script>
+</body>
+</html>

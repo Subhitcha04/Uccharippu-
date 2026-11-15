@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+ledger.json
+live_log*.jsonl
+receipts/
+node_modules/
+.env
+*.bak

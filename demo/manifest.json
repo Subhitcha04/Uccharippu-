@@ -1,0 +1,27 @@
+[
+ {
+  "lot": "lot61",
+  "label": "Plain hundreds · நெத்திலி"
+ },
+ {
+  "lot": "lot55",
+  "label": "Shorthand “X-அரை” · கணவாய்"
+ },
+ {
+  "lot": "lot62",
+  "label": "The “ஆயிரத்தி” form · இறால்"
+ },
+ {
+  "lot": "lot52",
+  "label": "Thousands · சுறா"
+ },
+ {
+  "lot": "lot70",
+  "label": "Thousands, long buyer name · கொடுவா"
+ },
+ {
+  "lot": "lot63",
+  "label": "Buyer garbled → flagged for review · நெத்திலி",
+  "force_cond": "snr10"
+ }
+]
