@@ -4,7 +4,6 @@
 
 Built on **Gnani Prisma** (realtime Tamil speech-to-text) and **Gnani Timbre** (Tamil text-to-speech) for the **Great Indian AI Internship Challenge**. Solo entry by Subhitcha, Coimbatore Institute of Technology.
 
-**Demo video (2–3 min):** ADD-VIDEO-LINK-HERE
 
 ![The price follows every bid as it is called](docs/live-bidding.jpg)
 ![The finished lot lands in the ledger with its buyer, ready for the clerk to confirm](docs/ledger-record.jpg)
